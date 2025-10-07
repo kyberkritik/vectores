@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pista 8‑bit · Doble Runner — SVG + WebAudio (1 archivo)</title>
+<meta name="description" content="Doble corredor robot 8‑bit estilo arcade: toda la animación en SVG/CSS/JS y una melodía de ~1 minuto con WebAudio en un solo HTML."/>
+<style>
+  :root{
+    --bg:#0b0c10; --fg:#e6f2ff; --muted:#9fb2c1;
+    --c1:#66e0ff; --c2:#baff6a; --c3:#ffd166; --c4:#ff6ad5;
+    --shadow:0 10px 30px rgba(0,0,0,.45); --radius:16px;
+  }
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(102,224,255,.10), transparent 60%),
+                radial-gradient(900px 700px at -10% 20%, rgba(186,255,106,.08), transparent 55%),var(--bg);
+       color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;letter-spacing:.2px}
+  header{max-width:1000px;margin:24px auto 8px;padding:0 18px}
+  h1{font-size:clamp(1.6rem,4.2vw,2.4rem);margin:.1rem 0 .2rem}
+  .lead{color:var(--muted);margin:0}
+  .wrap{max-width:1000px;margin:8px auto 30px;padding:0 18px}
+  .stage{position:relative;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+  .btn{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:var(--fg);padding:.55rem .8rem;border-radius:.75rem;cursor:pointer}
+  .btn:hover{border-color:rgba(255,255,255,.28)}
+  .hint{color:var(--muted);font-size:.92rem}
+
+  /* ===== SVG ANIMATION (8‑bit look) ===== */
+  svg{width:100%;height:auto;background:linear-gradient(#06080a, #0a0f14 40%, #0c1118)}
+  .city-layer rect.win{animation:flicker 2.5s infinite steps(2,end)}
+  @keyframes flicker{50%{opacity:.25}}
+  
+  /* Track stripes scroll */
+  .track .stripe{animation:scroll 2s linear infinite}
+  .track.fast .stripe{animation-duration:1.2s}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-200%)} }
+
+  /* Runners move left->right and reaparecen */
+  .runner{animation:runAcross 6.5s linear infinite}
+  .runner.alt{animation-duration:7.6s;animation-delay:.9s}
+  @keyframes runAcross{0%{transform:translateX(-12%)}100%{transform:translateX(112%)}}
+
+  /* Pseudo-walk cycle: alterna piernas/brazos */
+  .limbA{animation:switchA .35s steps(2,end) infinite}
+  .limbB{animation:switchB .35s steps(2,end) infinite}
+  @keyframes switchA{50%{opacity:.2}}
+  @keyframes switchB{50%{opacity:1}}
+
+  .badge{display:inline-flex;gap:.5rem;align-items:center;color:var(--muted)}
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:conic-gradient(var(--c1),var(--c2));box-shadow:0 0 10px rgba(102,224,255,.7)}
+  footer{color:var(--muted);font-size:.9rem;margin:8px 0 26px}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);padding:.08rem .35rem;border-radius:.35rem}
+</style>
+</head>
+<body>
+  <header>
+    <span class="badge"><span class="dot"></span> SVG + WebAudio, 1 archivo · Estética Movimiento KB</span>
+    <h1>Pista 8‑bit · Doble Runner</h1>
+    <p class="lead">Dos niños‑robot corren por una pista estilo Atari; la ciudad vibra en 8‑bit. Todo el arte es <span class="kbd">SVG</span> animado y la música (~1 min) se genera con <span class="kbd">WebAudio</span>.</p>
+  </header>
+
+  <div class="wrap">
+    <div class="controls">
+      <button class="btn" id="play">▶ Reproducir (1 min)</button>
+      <button class="btn" id="stop">■ Detener</button>
+      <button class="btn" id="speed">⏩ Velocidad pista</button>
+    </div>
+    <div class="stage">
+      <!-- ======= SVG ESCENA COMPLETA ======= -->
+      <svg viewBox="0 0 1200 500" role="img" aria-label="Pista 8‑bit con dos robots corriendo y ciudad al fondo">
+        <!-- Cielo degradado oscuro -->
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#05070a"/>
+            <stop offset="100%" stop-color="#091018"/>
+          </linearGradient>
+          <linearGradient id="trackGrad" x1="0" x2="0">
+            <stop offset="0%" stop-color="#0b1320"/>
+            <stop offset="100%" stop-color="#0f1a28"/>
+          </linearGradient>
+          <linearGradient id="neon" x1="0" x2="1">
+            <stop offset="0" stop-color="#66e0ff"/>
+            <stop offset="1" stop-color="#baff6a"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="1200" height="500" fill="url(#sky)"/>
+
+        <!-- Capa ciudad lejana (parallax) -->
+        <g class="city-layer" opacity="0.45">
+          <!-- Rascacielos simplificados tipo 8‑bit -->
+          <g transform="translate(0,60)">
+            <!-- repetición de bloques -->
+            <g fill="#0f2030">
+              <rect x="20" y="80" width="70" height="180"/>
+              <rect x="115" y="40" width="55" height="220"/>
+              <rect x="190" y="100" width="85" height="160"/>
+              <rect x="300" y="60" width="70" height="200"/>
+              <rect x="390" y="30" width="60" height="230"/>
+              <rect x="470" y="90" width="75" height="170"/>
+              <rect x="560" y="55" width="62" height="205"/>
+              <rect x="640" y="110" width="90" height="150"/>
+              <rect x="750" y="70" width="70" height="190"/>
+              <rect x="840" y="35" width="60" height="225"/>
+              <rect x="920" y="95" width="80" height="165"/>
+              <rect x="1020" y="60" width="70" height="200"/>
+              <rect x="1110" y="100" width="70" height="160"/>
+            </g>
+            <!-- Ventanas tipo 8‑bit -->
+            <g fill="#66e0ff">
+              <!-- se generan algunas ventanas por torre -->
+              <rect class="win" x="30" y="100" width="6" height="6"/>
+              <rect class="win" x="56" y="130" width="6" height="6"/>
+              <rect class="win" x="138" y="70" width="6" height="6"/>
+              <rect class="win" x="210" y="120" width="6" height="6"/>
+              <rect class="win" x="320" y="80" width="6" height="6"/>
+              <rect class="win" x="402" y="60" width="6" height="6"/>
+              <rect class="win" x="485" y="110" width="6" height="6"/>
+              <rect class="win" x="570" y="75" width="6" height="6"/>
+              <rect class="win" x="660" y="130" width="6" height="6"/>
+              <rect class="win" x="770" y="90" width="6" height="6"/>
+              <rect class="win" x="852" y="55" width="6" height="6"/>
+              <rect class="win" x="935" y="120" width="6" height="6"/>
+              <rect class="win" x="1036" y="85" width="6" height="6"/>
+              <rect class="win" x="1122" y="120" width="6" height="6"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- Pista tipo Atari (dos carriles) -->
+        <g class="track" id="trk">
+          <rect x="0" y="360" width="1200" height="90" fill="url(#trackGrad)"/>
+          <!-- Líneas laterales -->
+          <rect x="0" y="360" width="1200" height="4" fill="url(#neon)" opacity=".5"/>
+          <rect x="0" y="446" width="1200" height="4" fill="url(#neon)" opacity=".4"/>
+          <!-- Franjas que se desplazan -->
+          <g fill="#1a2a3a">
+            <g class="stripe">
+              <rect x="0" y="400" width="160" height="6"/>
+              <rect x="220" y="400" width="160" height="6"/>
+              <rect x="440" y="400" width="160" height="6"/>
+              <rect x="660" y="400" width="160" height="6"/>
+              <rect x="880" y="400" width="160" height="6"/>
+              <rect x="1100" y="400" width="160" height="6"/>
+            </g>
+            <g class="stripe" transform="translate(160,0)">
+              <rect x="0" y="420" width="160" height="6"/>
+              <rect x="220" y="420" width="160" height="6"/>
+              <rect x="440" y="420" width="160" height="6"/>
+              <rect x="660" y="420" width="160" height="6"/>
+              <rect x="880" y="420" width="160" height="6"/>
+              <rect x="1100" y="420" width="160" height="6"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- Runner 1: niño‑robot estilo 8‑bit (no IP específica) -->
+        <g class="runner" transform="translate(-120,0)">
+          <!-- cuerpo -->
+          <rect x="240" y="320" width="26" height="26" fill="#2cd3ff"/>
+          <!-- casco/ojos -->
+          <rect x="244" y="316" width="18" height="10" fill="#102230"/>
+          <rect x="248" y="319" width="4" height="4" fill="#66e0ff"/>
+          <rect x="258" y="319" width="4" height="4" fill="#66e0ff"/>
+          <!-- brazo A/B -->
+          <rect class="limbA" x="234" y="326" width="8" height="6" fill="#2cd3ff" opacity="1"/>
+          <rect class="limbB" x="268" y="326" width="8" height="6" fill="#2cd3ff" opacity=".2"/>
+          <!-- pierna A/B -->
+          <rect class="limbA" x="242" y="348" width="8" height="10" fill="#18a7cf" opacity="1"/>
+          <rect class="limbB" x="256" y="348" width="8" height="10" fill="#18a7cf" opacity=".2"/>
+        </g>
+
+        <!-- Runner 2: compañero estilo 8‑bit (no IP específica) -->
+        <g class="runner alt" transform="translate(-220,0)">
+          <rect x="140" y="332" width="24" height="24" fill="#ffd166"/>
+          <rect x="144" y="328" width="16" height="9" fill="#302018"/>
+          <rect x="148" y="331" width="4" height="4" fill="#ffef9a"/>
+          <rect x="156" y="331" width="4" height="4" fill="#ffef9a"/>
+          <rect class="limbA" x="134" y="336" width="7" height="6" fill="#ffd166" opacity="1"/>
+          <rect class="limbB" x="166" y="336" width="7" height="6" fill="#ffd166" opacity=".2"/>
+          <rect class="limbA" x="142" y="356" width="7" height="10" fill="#d8b046" opacity="1"/>
+          <rect class="limbB" x="154" y="356" width="7" height="10" fill="#d8b046" opacity=".2"/>
+        </g>
+
+        <!-- Resplandor de neón en el borde inferior -->
+        <rect x="0" y="450" width="1200" height="50" fill="url(#neon)" opacity=".05"/>
+      </svg>
+    </div>
+    <p class="hint">Consejo: muchos navegadores requieren un clic antes de reproducir audio. Usa <b>Reproducir</b> y deja correr ~1 minuto; la animación es continua y los robots reaparecen al cruzar el borde.</p>
+  </div>
+
+  <footer class="wrap">Todo en un único HTML. Arte en <span class="kbd">SVG</span>, animación con <span class="kbd">CSS</span> y <span class="kbd">SMIL/CSS</span>, música con <span class="kbd">WebAudio</span> (onda cuadrada/triangular + <i>snare</i> de ruido).</footer>
+
+<script>
+// =====================
+//   WEB AUDIO: 8‑bit jam (~60 s)
+// =====================
+let ctx, master, isPlaying=false, stopAt=0, tempo=120; // 120 BPM => 0.5s/beat
+const BEAT = 60/tempo;         // dur de negra
+const STEP = BEAT/2;           // corchea (hi‑hat)
+const DURATION_SECONDS = 60;   // ~1 minuto
+let schedulerTimer=null, nextNoteTime=0;
+
+function initAudio(){
+  if (ctx) return;
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = 0.1; master.connect(ctx.destination);
+}
+
+function kick(time){
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(120, time);
+  o.frequency.exponentialRampToValueAtTime(36, time+0.12);
+  g.gain.setValueAtTime(0.9, time);
+  g.gain.exponentialRampToValueAtTime(0.001, time+0.15);
+  o.connect(g); g.connect(master);
+  o.start(time); o.stop(time+0.16);
+}
+
+function noiseBuffer(){
+  const buffer = ctx.createBuffer(1, ctx.sampleRate*0.2, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i=0;i<data.length;i++) data[i] = Math.random()*2-1; // white noise
+  return buffer;
+}
+
+function snare(time){
+  // ruido + tono breve
+  const src = ctx.createBufferSource(); src.buffer = noiseBuffer();
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.5, time); g.gain.exponentialRampToValueAtTime(0.001, time+0.12);
+  src.connect(g); g.connect(master);
+  src.start(time); src.stop(time+0.13);
+  const o = ctx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(180, time); o.frequency.exponentialRampToValueAtTime(120, time+0.08);
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.2, time); g2.gain.exponentialRampToValueAtTime(0.001, time+0.09);
+  o.connect(g2); g2.connect(master); o.start(time); o.stop(time+0.1);
+}
+
+function hihat(time){
+  const src = ctx.createBufferSource(); src.buffer = noiseBuffer();
+  const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=6000;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.08, time); g.gain.exponentialRampToValueAtTime(0.0008, time+0.05);
+  src.connect(hp); hp.connect(g); g.connect(master);
+  src.start(time); src.stop(time+0.06);
+}
+
+function tone(time, midi=60, dur=BEAT*0.9, type='square', vol=0.12){
+  const f = 440 * Math.pow(2, (midi-69)/12);
+  const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, time);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, time); g.gain.linearRampToValueAtTime(vol, time+0.01); g.gain.exponentialRampToValueAtTime(0.0001, time+dur);
+  o.connect(g); g.connect(master);
+  o.start(time); o.stop(time+dur+0.02);
+}
+
+// Simple secuenciador por pasos: 16‑step patrón
+const leadPattern = [72,74,76,79,  79,76,74,72,  71,72,74,76,  79,76,74,72]; // C mayor asc/desc
+const bassPattern = [48,48,48,48,  55,55,55,55,  53,53,53,53,  55,55,55,55]; // C‑G‑F‑G
+
+let stepIndex=0;
+function schedule(){
+  const lookahead = 0.1; // segundos
+  while (nextNoteTime < ctx.currentTime + lookahead){
+    const barStep = stepIndex % 16;
+    // Drums
+    if (barStep===0 || barStep===8) kick(nextNoteTime);     // 1 y 9
+    if (barStep===4 || barStep===12) snare(nextNoteTime);   // 5 y 13
+    hihat(nextNoteTime);                                    // corcheas
+    // Bass cada negra
+    if (barStep%2===0) tone(nextNoteTime, bassPattern[barStep], BEAT*0.9, 'square', 0.09);
+    // Lead cada paso
+    tone(nextNoteTime, leadPattern[barStep], STEP*0.9, (barStep%4===0?'triangle':'square'), 0.08);
+
+    stepIndex = (stepIndex + 1) % 16;
+    nextNoteTime += STEP; // avanza una corchea
+  }
+  if (ctx.currentTime >= stopAt){ stopAudio(); return; }
+}
+
+function startAudio(){
+  initAudio();
+  if (isPlaying) return;
+  isPlaying = true;
+  nextNoteTime = ctx.currentTime + 0.05; // arranque
+  stopAt = ctx.currentTime + DURATION_SECONDS;
+  schedulerTimer = setInterval(schedule, 25);
+}
+
+function stopAudio(){
+  if (!ctx) return; isPlaying=false; clearInterval(schedulerTimer); schedulerTimer=null;
+}
+
+// ========= UI =========
+const btnPlay = document.getElementById('play');
+const btnStop = document.getElementById('stop');
+const btnSpeed = document.getElementById('speed');
+btnPlay.addEventListener('click', () => { startAudio(); });
+btnStop.addEventListener('click', () => { stopAudio(); });
+btnSpeed.addEventListener('click', () => {
+  // alterna clase para acelerar franjas de la pista
+  const trk = document.getElementById('trk');
+  trk.classList.toggle('fast');
+});
+</script>
+</body>
+</html>
